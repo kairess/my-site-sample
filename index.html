@@ -191,16 +191,9 @@ const PROFILE = {
 };
 // ──────────────────────────────────────────────────────────────────────────────
 
-// 블로그 글 (예시 글입니다. 새 글은 맨 위에 같은 모양으로 추가하세요. 본문은 빈 줄로 문단을 나눕니다)
-const BLOG_SUMMARY = ""; // "최근 글 요약" 패널에 들어갈 내용. 비워 두면 안내 문구가 나옵니다
-const POSTS = [
-  { id: 3, title: "예시 글 · 새 학기를 시작하며", date: "2026-10-20",
-    body: "이 글은 블로그 모양을 보여 주기 위한 예시입니다. 실제 글을 쓰실 때 이 부분을 지우고 내용을 바꿔 넣으세요.\n\n새 학기가 시작되면 늘 같은 마음이 듭니다. 올해는 무엇을 더 잘해 볼까, 어떤 것을 덜어낼까. 작은 목표 하나만 정해도 한 학기가 훨씬 또렷해집니다.\n\n여러분은 이번 학기에 어떤 목표를 세우셨나요?" },
-  { id: 2, title: "예시 글 · 수업 도구를 고르는 기준", date: "2026-10-12",
-    body: "이것도 예시 글입니다. 내용은 자유롭게 바꾸셔도 됩니다.\n\n새로운 도구를 만나면 먼저 이렇게 묻습니다. 이 도구가 없어도 되는 수업인가, 이 도구가 있어서 더 나아지는 수업인가. 후자일 때만 수업에 들여오려고 합니다.\n\n도구는 수업을 돕는 조연이라고 생각합니다." },
-  { id: 1, title: "예시 글 · 블로그를 열었습니다", date: "2026-10-01",
-    body: "첫 번째 예시 글입니다.\n\n배운 것, 만든 것, 생각한 것을 천천히 기록해 보려고 합니다. 길지 않아도 괜찮으니 꾸준히 남기는 것이 목표입니다.\n\n잘 부탁드립니다." }
-];
+// Supabase 연결 정보 (공개용 키라서 코드에 들어가도 괜찮습니다. 비밀 키는 절대 넣지 마세요)
+const SUPABASE_URL = "https://bahcwlkqhmourgqdkmpt.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY = "sb_publishable_tDGGdnnT7I9iK-F_TphbAQ_lkpCqPAg";
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const has = a => Array.isArray(a) && a.length > 0;
@@ -236,58 +229,110 @@ document.title = PROFILE.name || "Portfolio";
 document.getElementById("tab-profile").innerHTML = renderProfile(PROFILE);
 document.getElementById("foot").textContent = "© " + new Date().getFullYear() + " " + (PROFILE.name || "");
 
+/* ───── Supabase 호출 (라이브러리 없이 fetch만 사용) ───── */
+async function api(path, options = {}) {
+  let res;
+  try {
+    res = await fetch(SUPABASE_URL + path, {
+      ...options,
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: "Bearer " + SUPABASE_ANON_KEY,
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      }
+    });
+  } catch (e) {
+    throw new Error("인터넷 연결을 확인한 뒤 다시 시도해 주세요.");
+  }
+  if (!res.ok) {
+    if (res.status === 401 || res.status === 403) throw new Error("접근이 허락되지 않았어요. 사이트 관리자에게 알려 주세요.");
+    if (res.status === 404) throw new Error("데이터 저장소를 찾지 못했어요. 사이트 관리자에게 알려 주세요.");
+    if (res.status === 400 || res.status === 422) throw new Error("내용이 올바르지 않아요. 입력한 내용을 확인해 주세요.");
+    if (res.status === 429) throw new Error("요청이 너무 많아요. 잠시 뒤에 다시 시도해 주세요.");
+    throw new Error("서버에 문제가 생겼어요. 잠시 뒤에 다시 시도해 주세요.");
+  }
+  return res.status === 204 ? null : res.json().catch(() => null);
+}
+const fmtDate = iso => {
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+};
+
 /* ───── 블로그 ───── */
 const blogEl = document.getElementById("tab-blog");
-const paras = t => t.split(/\n\s*\n/).map(s => `<p>${esc(s.trim())}</p>`).join("");
+const paras = t => String(t).split(/\n\s*\n/).map(s => `<p>${esc(s.trim())}</p>`).join("");
+let posts = [], blogSummary = "", blogError = "", blogLoaded = false;
 
+async function loadBlog() {
+  blogError = "";
+  try {
+    const [p, s] = await Promise.all([
+      api("posts?select=id,title,content,created_at&order=created_at.desc"),
+      api("summaries?select=content&order=created_at.desc&limit=1")
+    ]);
+    posts = p || [];
+    blogSummary = s && s[0] ? s[0].content : "";
+    blogLoaded = true;
+  } catch (e) { blogError = e.message; }
+}
 function showBlogList() {
-  const posts = [...POSTS].sort((a, b) => b.date.localeCompare(a.date));
+  let list;
+  if (!blogLoaded && !blogError) list = `<p class="empty">불러오는 중이에요…</p>`;
+  else if (blogError) list = `<p class="msg-err">글을 불러오지 못했어요. ${esc(blogError)}</p>`;
+  else if (!posts.length) list = `<p class="empty">아직 글이 없어요</p>`;
+  else list = `<ul class="post-list">${posts.map(p => `
+      <li><button data-id="${esc(p.id)}"><h3>${esc(p.title)}</h3><p class="date">${esc(fmtDate(p.created_at))}</p><p class="excerpt">${esc(String(p.content).replace(/\s+/g, " "))}</p></button></li>`).join("")}</ul>`;
   blogEl.innerHTML = `<h1 class="page-title">블로그</h1>
-    <div class="panel"><h2>최근 글 요약</h2><p>${BLOG_SUMMARY ? esc(BLOG_SUMMARY) : "아직 요약이 없어요"}</p></div>
-    ${posts.length ? `<ul class="post-list">${posts.map(p => `
-      <li><button data-id="${esc(p.id)}"><h3>${esc(p.title)}</h3><p class="date">${esc(p.date)}</p><p class="excerpt">${esc(p.body.replace(/\s+/g, " "))}</p></button></li>`).join("")}</ul>`
-      : `<p class="empty">아직 글이 없어요</p>`}`;
+    <div class="panel"><h2>최근 글 요약</h2><p>${blogSummary ? esc(blogSummary) : "아직 요약이 없어요"}</p></div>${list}`;
   blogEl.querySelectorAll("button[data-id]").forEach(b => b.addEventListener("click", () => showPost(b.dataset.id)));
   window.scrollTo(0, 0);
 }
 function showPost(id) {
-  const p = POSTS.find(x => String(x.id) === String(id));
+  const p = posts.find(x => String(x.id) === String(id));
   if (!p) return showBlogList();
   blogEl.innerHTML = `<button class="back" id="back">← 목록으로</button>
-    <article class="post-view"><h1>${esc(p.title)}</h1><p class="date">${esc(p.date)}</p><div class="body">${paras(p.body)}</div></article>`;
+    <article class="post-view"><h1>${esc(p.title)}</h1><p class="date">${esc(fmtDate(p.created_at))}</p><div class="body">${paras(p.content)}</div></article>`;
   document.getElementById("back").addEventListener("click", showBlogList);
   window.scrollTo(0, 0);
 }
 showBlogList();
+loadBlog().then(() => { if (blogEl.querySelector(".post-list, .empty, .msg-err")) showBlogList(); });
 
-/* ───── 방명록 (이 브라우저에만 저장됩니다) ───── */
-const GB_KEY = "guestbook-entries";
+/* ───── 방명록 ───── */
 const gbName = document.getElementById("gb-name"), gbMsg = document.getElementById("gb-msg");
 const gbErr = document.getElementById("gb-err"), gbCount = document.getElementById("gb-count"), gbList = document.getElementById("gb-list");
-let entries = [];
-try { entries = JSON.parse(localStorage.getItem(GB_KEY)) || []; } catch (e) {}
+const gbBtn = document.querySelector("#gb-form button");
 
-function renderGB() {
-  gbList.innerHTML = entries.length
-    ? entries.map(e => `<li><b>${esc(e.name)}</b> <span class="date">${esc(e.date)}</span><p>${esc(e.message)}</p></li>`).join("")
-    : `<li class="empty">아직 남겨진 글이 없어요. 첫 글을 남겨 주세요.</li>`;
+async function loadGB() {
+  gbList.innerHTML = `<li class="empty">불러오는 중이에요…</li>`;
+  try {
+    const rows = await api("guestbook?select=id,name,message,created_at&order=created_at.desc");
+    gbList.innerHTML = rows && rows.length
+      ? rows.map(e => `<li><b>${esc(e.name)}</b> <span class="date">${esc(fmtDate(e.created_at))}</span><p>${esc(e.message)}</p></li>`).join("")
+      : `<li class="empty">아직 남겨진 글이 없어요. 첫 글을 남겨 주세요.</li>`;
+  } catch (e) {
+    gbList.innerHTML = `<li class="msg-err">방명록을 불러오지 못했어요. ${esc(e.message)}</li>`;
+  }
 }
 gbMsg.addEventListener("input", () => { gbCount.textContent = gbMsg.value.length + " / 200"; });
-document.getElementById("gb-form").addEventListener("submit", ev => {
+document.getElementById("gb-form").addEventListener("submit", async ev => {
   ev.preventDefault();
   const name = gbName.value.trim(), message = gbMsg.value.trim();
   if (!name) { gbErr.textContent = "이름을 입력해 주세요."; gbName.focus(); return; }
   if (!message) { gbErr.textContent = "메시지를 입력해 주세요."; gbMsg.focus(); return; }
   if (message.length > 200) { gbErr.textContent = "메시지는 200자까지 쓸 수 있어요."; return; }
   gbErr.textContent = "";
-  const d = new Date();
-  const date = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-  entries.unshift({ name, message, date });
-  try { localStorage.setItem(GB_KEY, JSON.stringify(entries)); } catch (e) {}
-  gbName.value = ""; gbMsg.value = ""; gbCount.textContent = "0 / 200";
-  renderGB();
+  gbBtn.disabled = true;
+  try {
+    await api("guestbook", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ name, message }) });
+    gbName.value = ""; gbMsg.value = ""; gbCount.textContent = "0 / 200";
+    await loadGB();
+  } catch (e) {
+    gbErr.textContent = "글을 남기지 못했어요. " + e.message;
+  } finally { gbBtn.disabled = false; }
 });
-renderGB();
+loadGB();
 
 const tabs = document.querySelectorAll("nav button");
 function show(name) {
