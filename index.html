@@ -84,7 +84,11 @@
   .page-title::after { content: "."; color: var(--accent); }
   .panel { border: 1px solid var(--ink); padding: 28px; margin-bottom: 56px; }
   .panel h2 { margin: 0 0 12px; font-size: 13px; font-weight: 600; letter-spacing: .14em; color: var(--accent); }
-  .panel p { margin: 0; color: var(--mute); }
+  .panel p { margin: 0; color: var(--mute); white-space: pre-line; }
+  .panel-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; margin-top: 20px; }
+  .panel-row button { font: inherit; font-size: 14px; background: var(--ink); color: var(--paper); border: 0; padding: 10px 20px; cursor: pointer; }
+  .panel-row button:hover:not(:disabled) { background: var(--accent); }
+  .panel-row button:disabled { opacity: .5; cursor: default; }
   .post-list { list-style: none; margin: 0 0 96px; padding: 0; }
   .post-list li { border-top: 1px solid var(--line); }
   .post-list li:last-child { border-bottom: 1px solid var(--line); }
@@ -276,6 +280,28 @@ async function loadBlog() {
     blogLoaded = true;
   } catch (e) { blogError = e.message; }
 }
+// 요약 새로고침: Edge Function 호출 (주소는 SUPABASE_URL의 /rest/v1/ 부분을 /functions/v1/ai로 바꿔서 만듭니다)
+const SUMMARY_FN_URL = SUPABASE_URL.replace("/rest/v1/", "/functions/v1/ai");
+async function refreshSummary() {
+  const btn = document.getElementById("summary-btn"), msg = document.getElementById("summary-msg"), txt = document.getElementById("summary-text");
+  btn.disabled = true; msg.textContent = ""; btn.textContent = "요약 만드는 중…";
+  try {
+    const res = await fetch(SUMMARY_FN_URL, {
+      method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY, "Content-Type": "application/json" },
+      body: "{}"
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || data.error || !data.summary) throw new Error("fail");
+    blogSummary = data.summary;
+    txt.textContent = data.summary;
+  } catch (e) {
+    msg.textContent = "잠시 후 다시 시도해 주세요.";
+  } finally {
+    btn.disabled = false; btn.textContent = "요약 새로고침";
+  }
+}
+
 function showBlogList() {
   let list;
   if (!blogLoaded && !blogError) list = `<p class="empty">불러오는 중이에요…</p>`;
@@ -284,7 +310,9 @@ function showBlogList() {
   else list = `<ul class="post-list">${posts.map(p => `
       <li><button data-id="${esc(p.id)}"><h3>${esc(p.title)}</h3><p class="date">${esc(fmtDate(p.created_at))}</p><p class="excerpt">${esc(String(p.content).replace(/\s+/g, " "))}</p></button></li>`).join("")}</ul>`;
   blogEl.innerHTML = `<h1 class="page-title">블로그</h1>
-    <div class="panel"><h2>최근 글 요약</h2><p>${blogSummary ? esc(blogSummary) : "아직 요약이 없어요"}</p></div>${list}`;
+    <div class="panel"><h2>최근 글 요약</h2><p id="summary-text">${blogSummary ? esc(blogSummary) : "아직 요약이 없어요"}</p>
+      <div class="panel-row"><button type="button" id="summary-btn">요약 새로고침</button><span class="msg-err" id="summary-msg" role="alert"></span></div></div>${list}`;
+  document.getElementById("summary-btn").addEventListener("click", refreshSummary);
   blogEl.querySelectorAll("button[data-id]").forEach(b => b.addEventListener("click", () => showPost(b.dataset.id)));
   window.scrollTo(0, 0);
 }
