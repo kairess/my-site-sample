@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taehee Lee</title>
+<style>
+  :root {
+    --ink: #111;
+    --paper: #fff;
+    --mute: #777;
+    --line: #e6e6e6;
+    --accent: #ff4d1c;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Helvetica Neue", "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* tabs */
+  nav { border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--paper); z-index: 5; }
+  nav .wrap { display: flex; gap: 28px; }
+  nav button {
+    font: inherit; font-size: 14px; letter-spacing: .02em;
+    background: none; border: 0; padding: 20px 0 16px; cursor: pointer; color: var(--mute);
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  nav button:hover { color: var(--ink); }
+  nav button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+
+  /* hero */
+  .hero { padding: 120px 0 80px; }
+  .hero h1 {
+    font-size: clamp(56px, 13vw, 140px); line-height: .95; letter-spacing: -.04em;
+    margin: 0; font-weight: 800;
+  }
+  .hero h1::after { content: "."; color: var(--accent); }
+  .headline { font-size: clamp(20px, 3vw, 28px); margin: 32px 0 0; font-weight: 500; letter-spacing: -.01em; }
+  .summary { max-width: 640px; margin: 28px 0 0; font-size: 17px; color: #333; }
+  .links { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 32px; padding: 0; list-style: none; }
+  .links a { text-decoration: none; border-bottom: 1px solid var(--ink); padding-bottom: 2px; }
+  .links a:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* sections */
+  section.block { padding: 72px 0; border-top: 1px solid var(--line); display: grid; grid-template-columns: 200px 1fr; gap: 24px 48px; }
+  section.block > h2 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 0; padding: 0; list-style: none; }
+  .tags li { font-size: 18px; }
+  .tags li:not(:last-child)::after { content: "/"; margin-left: 10px; color: var(--accent); }
+
+  .rows { margin: 0; padding: 0; list-style: none; }
+  .rows li { display: grid; grid-template-columns: 150px 1fr; gap: 4px 24px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+  .rows li:first-child { padding-top: 0; }
+  .rows li:last-child { border-bottom: 0; padding-bottom: 0; }
+  .period { font-size: 14px; color: var(--mute); font-variant-numeric: tabular-nums; padding-top: 4px; }
+  .rows h3 { margin: 0; font-size: 20px; letter-spacing: -.01em; }
+  .rows .sub { color: var(--mute); font-size: 15px; }
+  .rows p { margin: 8px 0 0; color: #333; font-size: 15px; }
+
+  /* cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+  .card { border: 1px solid var(--ink); padding: 28px; min-height: 220px; display: flex; flex-direction: column; transition: background .2s, color .2s; }
+  .card:hover { background: var(--ink); color: var(--paper); }
+  .card .no { font-size: 13px; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .card h3 { font-size: 22px; line-height: 1.3; margin: auto 0 12px; letter-spacing: -.02em; padding-top: 40px; }
+  .card p { margin: 0; font-size: 14px; opacity: .8; }
+
+  .soon { padding: 140px 0; font-size: clamp(28px, 6vw, 48px); letter-spacing: -.03em; font-weight: 700; color: var(--mute); }
+  .soon span { color: var(--accent); }
+
+  footer { border-top: 1px solid var(--line); padding: 32px 0 56px; font-size: 13px; color: var(--mute); }
+  .hidden { display: none !important; }
+
+  /* blog */
+  .page-title { font-size: clamp(40px, 9vw, 88px); line-height: 1; letter-spacing: -.04em; font-weight: 800; margin: 96px 0 48px; }
+  .page-title::after { content: "."; color: var(--accent); }
+  .panel { border: 1px solid var(--ink); padding: 28px; margin-bottom: 56px; }
+  .panel h2 { margin: 0 0 12px; font-size: 13px; font-weight: 600; letter-spacing: .14em; color: var(--accent); }
+  .panel p { margin: 0; color: var(--mute); }
+  .post-list { list-style: none; margin: 0 0 96px; padding: 0; }
+  .post-list li { border-top: 1px solid var(--line); }
+  .post-list li:last-child { border-bottom: 1px solid var(--line); }
+  .post-list button { display: block; width: 100%; text-align: left; font: inherit; color: inherit; background: none; border: 0; padding: 32px 0; cursor: pointer; }
+  .post-list h3 { margin: 0; font-size: clamp(22px, 3.5vw, 30px); letter-spacing: -.02em; line-height: 1.3; }
+  .post-list button:hover h3 { color: var(--accent); }
+  .date { font-size: 14px; color: var(--mute); font-variant-numeric: tabular-nums; margin: 6px 0 0; }
+  .excerpt { margin: 12px 0 0; color: #333; font-size: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .back { font: inherit; font-size: 14px; background: none; border: 0; padding: 0; margin: 56px 0 0; cursor: pointer; color: var(--mute); }
+  .back:hover { color: var(--accent); }
+  .post-view h1 { font-size: clamp(32px, 6vw, 56px); line-height: 1.15; letter-spacing: -.03em; margin: 24px 0 0; }
+  .post-view .body { max-width: 640px; margin: 48px 0 96px; font-size: 17px; }
+  .post-view .body p { margin: 0 0 1.4em; }
+
+  /* guestbook */
+  .gb-form { display: grid; gap: 14px; max-width: 640px; margin-bottom: 72px; }
+  .gb-form input, .gb-form textarea { font: inherit; width: 100%; padding: 14px 16px; border: 1px solid var(--ink); border-radius: 0; background: var(--paper); color: var(--ink); }
+  .gb-form textarea { min-height: 120px; resize: vertical; }
+  .gb-form input:focus, .gb-form textarea:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+  .gb-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .count { font-size: 13px; color: var(--mute); font-variant-numeric: tabular-nums; }
+  .gb-form button { font: inherit; background: var(--ink); color: var(--paper); border: 0; padding: 14px 28px; cursor: pointer; }
+  .gb-form button:hover { background: var(--accent); }
+  .msg-err { color: var(--accent); font-size: 14px; min-height: 1.4em; margin: 0; }
+  .gb-list { list-style: none; margin: 0 0 96px; padding: 0; }
+  .gb-list li { border-top: 1px solid var(--line); padding: 24px 0; }
+  .gb-list li:last-child { border-bottom: 1px solid var(--line); }
+  .gb-list b { font-size: 17px; }
+  .gb-list p { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .empty { color: var(--mute); }
+
+  @media (max-width: 720px) {
+    .hero { padding: 72px 0 56px; }
+    section.block { grid-template-columns: 1fr; padding: 48px 0; gap: 24px; }
+    .rows li { grid-template-columns: 1fr; }
+    nav .wrap { gap: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap" role="tablist">
+    <button role="tab" data-tab="profile" aria-selected="true">이력서/포트폴리오</button>
+    <button role="tab" data-tab="blog" aria-selected="false">블로그</button>
+    <button role="tab" data-tab="guestbook" aria-selected="false">방명록</button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div id="tab-profile"></div>
+  <div id="tab-blog" class="hidden"></div>
+  <div id="tab-guestbook" class="hidden">
+    <h1 class="page-title">방명록</h1>
+    <form class="gb-form" id="gb-form" novalidate>
+      <input id="gb-name" type="text" placeholder="이름" maxlength="30" autocomplete="off">
+      <textarea id="gb-msg" placeholder="메시지 (200자까지)" maxlength="200"></textarea>
+      <div class="gb-row"><span class="count" id="gb-count">0 / 200</span><button type="submit">남기기</button></div>
+      <p class="msg-err" id="gb-err" role="alert"></p>
+    </form>
+    <ul class="gb-list" id="gb-list"></ul>
+  </div>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<script>
+// ───────── 여기만 고치면 화면 내용이 바뀝니다 (비워 두면 화면에서 숨겨집니다) ─────────
+const PROFILE = {
+  name: "Taehee Lee",
+  headline: "",
+  summary: "AI로 현실의 복잡한 문제를 푸는 연쇄 창업가이자 기술 리더. AI 솔루션 기업을 창업해 성장시킨 뒤 성공적으로 매각했고, 영화 제작 워크플로에 생성형 AI를 선도적으로 도입했습니다. 현재 연세대학교 박사과정에서 MR 유도 방사선 치료를 위한 3D cine MRI 향상 AI 기법을 연구하고 있습니다.",
+  links: [
+    // { label: "GitHub", url: "https://..." }
+  ],
+  skills: ["AI 기반 의료영상 분석", "인공지능", "컴퓨터 비전", "딥러닝", "기술 리더십"],
+  languages: ["한국어", "영어", "일본어"],
+  education: [
+    { school: "Yonsei University", period: "2028 (졸업 예정)", detail: "의료물리학 박사 (Ph.D. in Medical Physics) · 지도교수 Jihoon Kim, HEART Lab" },
+    { school: "Yonsei University", period: "2025.08", detail: "컴퓨터과학 공학석사 (Master of Engineering in Computer Science)" },
+    { school: "Sungkyunkwan University", period: "2013.02", detail: "전기전자공학 학사 (Bachelor of Electrical and Electronic Engineering)" }
+  ],
+  career: [
+    { org: "AI Technology Hub, Gangnam Severance Hospital, Yonsei University", role: "Research Associate (Ph.D. Candidate)", period: "2026.09 – 현재", detail: "MR 유도 방사선 치료를 위해 3D cine MRI의 공간·시간 해상도를 높이는 환자 맞춤형 딥러닝 기법을 개발합니다." },
+    { org: "AIFrenz · (사)에이아이프렌즈학회", role: "Board Director", period: "2026.06 – 현재", detail: "" },
+    { org: "OPIM Digital", role: "CTO", period: "2023.06 – 현재", detail: "영화 CG 파이프라인 전반에 생성형 AI 도입을 이끌며, 복잡한 작업 흐름을 간소화하고 아티스트의 창작 선택지를 넓히며 제작 효율을 크게 높이는 새로운 기법을 개발합니다." },
+    { org: "Korea National University of Education · 한국교원대학교", role: "Adjunct Professor", period: "2022.09 – 현재", detail: "교육대학원 인공지능융합교육프로젝트에서 교육 분야의 AI 활용을 주제로 대학원 강의를 합니다." },
+    { org: "The Matrix", role: "Founder & CEO", period: "2020.08 – 2025.07", detail: "POSCO E&C, Daewoo E&C, Samsung Electronics Service 등 기업 고객을 위한 AI 솔루션의 개발과 도입을 이끌어 업무 효율을 높였습니다. OPIM Digital에 약 140만 달러(20억 원)에 인수되며 성공적으로 매각했습니다." },
+    { org: "빵형의 개발도상국", role: "YouTube Creator", period: "2018.10 – 2025.02", detail: "누구나 따라 할 수 있는 전문가 수준의 튜토리얼과 전략적 협업으로 AI·프로그래밍 교육 채널을 구독자 5만 명 이상으로 키웠습니다." },
+    { org: "Miso, Inc.", role: "Growth Hacker", period: "2019.08 – 2020.02", detail: "이탈 예측 모델과 CAC/LTV 분석을 활용해 예산 배분과 고객 유지를 개선하는 풀퍼널 마케팅 최적화 프레임워크를 구축했습니다." },
+    { org: "VisualCamp", role: "R&D Manager", period: "2017.04 – 2019.08", detail: "일반 스마트폰 카메라만으로 작동하는 모바일 시선 추적 솔루션 개발을 총괄했습니다. 실시간 CNN 모델 연구부터 iOS·Android용 고성능 크로스 플랫폼 SDK까지 맡았습니다." },
+    { org: "Ecube Labs", role: "Director of R&D", period: "2014.05 – 2016.12", detail: "자체 센서 펌웨어, 확장 가능한 마이크로서비스 백엔드, 경로 최적화용 클라이언트 앱까지 전 영역을 총괄하며 IoT 기반 글로벌 스마트 쓰레기 관리 플랫폼을 개발했습니다." },
+    { org: "Tenacity Company/Hellohouse", role: "Co-Founder & CTO", period: "2013.01 – 2014.04", detail: "사용자가 인테리어 아이디어를 공유하고 찾아보는 홈 데코·인테리어 소셜 미디어 플랫폼을 만들었습니다." }
+  ],
+  certificates: [],
+  projects: [
+    { title: "스마트폰 시선 추적 SDK", description: "일반 스마트폰 카메라로 작동하는 모바일 시선 추적. 실시간 CNN 모델부터 iOS·Android SDK까지. (VisualCamp)" },
+    { title: "IoT 스마트 쓰레기 관리 플랫폼", description: "센서 펌웨어, 마이크로서비스 백엔드, 경로 최적화 앱을 아우르는 글로벌 플랫폼. (Ecube Labs)" },
+    { title: "영화 CG를 위한 생성형 AI", description: "영화 CG 파이프라인에 생성형 AI를 도입해 제작 효율과 창작 선택지를 넓혔습니다. (OPIM Digital)" },
+    { title: "기업용 AI 솔루션", description: "POSCO E&C, Daewoo E&C, Samsung Electronics Service의 업무 효율을 높인 AI 솔루션. (The Matrix)" },
+    { title: "AI·프로그래밍 교육 채널", description: "구독자 5만 명 이상의 YouTube 채널 '빵형의 개발도상국'." },
+    { title: "홈 데코 소셜 플랫폼", description: "인테리어 아이디어를 공유하고 발견하는 커뮤니티. (Hellohouse)" }
+  ]
+};
+// ──────────────────────────────────────────────────────────────────────────────
+
+// 블로그 글 (예시 글입니다. 새 글은 맨 위에 같은 모양으로 추가하세요. 본문은 빈 줄로 문단을 나눕니다)
+const BLOG_SUMMARY = ""; // "최근 글 요약" 패널에 들어갈 내용. 비워 두면 안내 문구가 나옵니다
+const POSTS = [
+  { id: 3, title: "예시 글 · 새 학기를 시작하며", date: "2026-10-20",
+    body: "이 글은 블로그 모양을 보여 주기 위한 예시입니다. 실제 글을 쓰실 때 이 부분을 지우고 내용을 바꿔 넣으세요.\n\n새 학기가 시작되면 늘 같은 마음이 듭니다. 올해는 무엇을 더 잘해 볼까, 어떤 것을 덜어낼까. 작은 목표 하나만 정해도 한 학기가 훨씬 또렷해집니다.\n\n여러분은 이번 학기에 어떤 목표를 세우셨나요?" },
+  { id: 2, title: "예시 글 · 수업 도구를 고르는 기준", date: "2026-10-12",
+    body: "이것도 예시 글입니다. 내용은 자유롭게 바꾸셔도 됩니다.\n\n새로운 도구를 만나면 먼저 이렇게 묻습니다. 이 도구가 없어도 되는 수업인가, 이 도구가 있어서 더 나아지는 수업인가. 후자일 때만 수업에 들여오려고 합니다.\n\n도구는 수업을 돕는 조연이라고 생각합니다." },
+  { id: 1, title: "예시 글 · 블로그를 열었습니다", date: "2026-10-01",
+    body: "첫 번째 예시 글입니다.\n\n배운 것, 만든 것, 생각한 것을 천천히 기록해 보려고 합니다. 길지 않아도 괜찮으니 꾸준히 남기는 것이 목표입니다.\n\n잘 부탁드립니다." }
+];
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const has = a => Array.isArray(a) && a.length > 0;
+const block = (title, inner) => `<section class="block"><h2>${title}</h2><div>${inner}</div></section>`;
+const tags = a => `<ul class="tags">${a.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
+
+function renderProfile(p) {
+  let h = `<header class="hero"><h1>${esc(p.name || "")}</h1>`;
+  if (p.headline) h += `<p class="headline">${esc(p.headline)}</p>`;
+  if (p.summary) h += `<p class="summary">${esc(p.summary)}</p>`;
+  if (has(p.links)) h += `<ul class="links">${p.links.map(l => `<li><a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a></li>`).join("")}</ul>`;
+  h += `</header>`;
+
+  if (has(p.career)) h += block("경력", `<ul class="rows">${p.career.map(c => `
+    <li><div class="period">${esc(c.period || "")}</div>
+    <div><h3>${esc(c.role || "")}</h3><div class="sub">${esc(c.org || "")}</div>${c.detail ? `<p>${esc(c.detail)}</p>` : ""}</div></li>`).join("")}</ul>`);
+
+  if (has(p.education)) h += block("학력", `<ul class="rows">${p.education.map(e => `
+    <li><div class="period">${esc(e.period || "")}</div>
+    <div><h3>${esc(e.school || "")}</h3>${e.detail ? `<p>${esc(e.detail)}</p>` : ""}</div></li>`).join("")}</ul>`);
+
+  if (has(p.skills)) h += block("기술", tags(p.skills));
+  if (has(p.languages)) h += block("언어", tags(p.languages));
+  if (has(p.certificates)) h += block("자격증", tags(p.certificates));
+
+  if (has(p.projects)) h += block("포트폴리오", `<div class="cards">${p.projects.map((x, i) => `
+    <article class="card"><span class="no">${String(i + 1).padStart(2, "0")}</span><h3>${esc(x.title || "")}</h3>${x.description ? `<p>${esc(x.description)}</p>` : ""}</article>`).join("")}</div>`);
+
+  return h;
+}
+
+document.title = PROFILE.name || "Portfolio";
+document.getElementById("tab-profile").innerHTML = renderProfile(PROFILE);
+document.getElementById("foot").textContent = "© " + new Date().getFullYear() + " " + (PROFILE.name || "");
+
+/* ───── 블로그 ───── */
+const blogEl = document.getElementById("tab-blog");
+const paras = t => t.split(/\n\s*\n/).map(s => `<p>${esc(s.trim())}</p>`).join("");
+
+function showBlogList() {
+  const posts = [...POSTS].sort((a, b) => b.date.localeCompare(a.date));
+  blogEl.innerHTML = `<h1 class="page-title">블로그</h1>
+    <div class="panel"><h2>최근 글 요약</h2><p>${BLOG_SUMMARY ? esc(BLOG_SUMMARY) : "아직 요약이 없어요"}</p></div>
+    ${posts.length ? `<ul class="post-list">${posts.map(p => `
+      <li><button data-id="${esc(p.id)}"><h3>${esc(p.title)}</h3><p class="date">${esc(p.date)}</p><p class="excerpt">${esc(p.body.replace(/\s+/g, " "))}</p></button></li>`).join("")}</ul>`
+      : `<p class="empty">아직 글이 없어요</p>`}`;
+  blogEl.querySelectorAll("button[data-id]").forEach(b => b.addEventListener("click", () => showPost(b.dataset.id)));
+  window.scrollTo(0, 0);
+}
+function showPost(id) {
+  const p = POSTS.find(x => String(x.id) === String(id));
+  if (!p) return showBlogList();
+  blogEl.innerHTML = `<button class="back" id="back">← 목록으로</button>
+    <article class="post-view"><h1>${esc(p.title)}</h1><p class="date">${esc(p.date)}</p><div class="body">${paras(p.body)}</div></article>`;
+  document.getElementById("back").addEventListener("click", showBlogList);
+  window.scrollTo(0, 0);
+}
+showBlogList();
+
+/* ───── 방명록 (이 브라우저에만 저장됩니다) ───── */
+const GB_KEY = "guestbook-entries";
+const gbName = document.getElementById("gb-name"), gbMsg = document.getElementById("gb-msg");
+const gbErr = document.getElementById("gb-err"), gbCount = document.getElementById("gb-count"), gbList = document.getElementById("gb-list");
+let entries = [];
+try { entries = JSON.parse(localStorage.getItem(GB_KEY)) || []; } catch (e) {}
+
+function renderGB() {
+  gbList.innerHTML = entries.length
+    ? entries.map(e => `<li><b>${esc(e.name)}</b> <span class="date">${esc(e.date)}</span><p>${esc(e.message)}</p></li>`).join("")
+    : `<li class="empty">아직 남겨진 글이 없어요. 첫 글을 남겨 주세요.</li>`;
+}
+gbMsg.addEventListener("input", () => { gbCount.textContent = gbMsg.value.length + " / 200"; });
+document.getElementById("gb-form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const name = gbName.value.trim(), message = gbMsg.value.trim();
+  if (!name) { gbErr.textContent = "이름을 입력해 주세요."; gbName.focus(); return; }
+  if (!message) { gbErr.textContent = "메시지를 입력해 주세요."; gbMsg.focus(); return; }
+  if (message.length > 200) { gbErr.textContent = "메시지는 200자까지 쓸 수 있어요."; return; }
+  gbErr.textContent = "";
+  const d = new Date();
+  const date = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  entries.unshift({ name, message, date });
+  try { localStorage.setItem(GB_KEY, JSON.stringify(entries)); } catch (e) {}
+  gbName.value = ""; gbMsg.value = ""; gbCount.textContent = "0 / 200";
+  renderGB();
+});
+renderGB();
+
+const tabs = document.querySelectorAll("nav button");
+function show(name) {
+  tabs.forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
+  ["profile", "blog", "guestbook"].forEach(n => document.getElementById("tab-" + n).classList.toggle("hidden", n !== name));
+  window.scrollTo(0, 0);
+}
+tabs.forEach(b => b.addEventListener("click", () => show(b.dataset.tab)));
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# 비밀번호·API 키가 들어갈 수 있는 파일
+.env
+.env.*
+*.pem
+*.key
+secrets*
+credentials*
+
+# 전화번호·이메일이 들어 있는 원본 이력서 (공개 저장소에 올리지 않음)
+resume.pdf
+
+# 시스템 파일
+.DS_Store
